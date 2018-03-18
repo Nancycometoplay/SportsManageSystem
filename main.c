@@ -9,6 +9,7 @@
 
 char username[10];
 char teamMechanism[20];
+int judgeMechanism=0;
 
 struct news{
     char time[100];
@@ -570,10 +571,6 @@ void changeComp(){
     }
 }
 
-/*------------对competition的增删改和显示(没有查询)-end--------------*/
-
-
-/*------------对代表队Team的增删改和显示(没有查询)-begin--------------*/
 void deleteComp(){
     char deleteNumber[10];
     int count=0;
@@ -649,6 +646,12 @@ void deleteComp(){
         adminControl();
     }
 }
+
+/*------------对competition的增删改和显示(没有查询)-end--------------*/
+
+
+/*------------对代表队Team的增删改和显示(没有查询)-begin--------------*/
+
 
 void showTeams(){
     int i=1;
@@ -1263,16 +1266,20 @@ void setTeamMechanism(){
         case 1:
             printf("请输入新的代表队机制（学院/年级/专业：");
             s_gets(newTeamMechanism,20);
-            if((strcmp(newTeamMechanism,"学院")==0)||(strcmp(newTeamMechanism,"年级")==0)||(strcmp(newTeamMechanism,"专业")==0)){
-                strcpy(teamMechanism,newTeamMechanism);
-                fwrite(&teamMechanism, sizeof(teamMechanism),1,fp);
-                printf("设置成功");
-                fclose(fp);
-            }else{
-                printf("输入有误！按任意键返回输入");
-                getchar();
-                setTeamMechanism();
+            if(!judgeMechanism)     //当judge 是1 时，证明已经录入了运动员，如果judge是0就可以改
+            {
+                if((strcmp(newTeamMechanism,"学院")==0)||(strcmp(newTeamMechanism,"年级")==0)||(strcmp(newTeamMechanism,"专业")==0)){
+                    strcpy(teamMechanism,newTeamMechanism);
+                    fwrite(&teamMechanism, sizeof(teamMechanism),1,fp);
+                    printf("设置成功");
+                    fclose(fp);
+                }else{
+                    printf("输入有误！按任意键返回输入");
+                    getchar();
+                    setTeamMechanism();
+                }
             }
+
             break;
         default:fclose(fp);adminControl();
     }
@@ -1298,29 +1305,94 @@ void addAthlete(){
     struct athletes athle;
     int sex;
     if((fp=fopen("athlete.txt","ab+"))!=NULL){
-        printf("请输入运动员姓名 \n·····返回管理员界面请按0");
-        s_gets(athle.name,20);
-        if(strcmp(athle.name,"0")!=0){
-            printf("学号：\n");
-            s_gets(athle.id,20);
+        printf("请输入运动员学号 \n·····返回管理员界面请按0");
+        s_gets(athle.id,20);
+        if(strcmp(athle.id,"0")!=0){
+            printf("姓名：\n");
+            s_gets(athle.name,20);
             printf("性别：1:男 2:女\n");
             //鲁棒性
             while(scanf("%d",&sex)&&(sex==1||sex==2)){
-                if (sex==1) athle.gender="男" ;
-
+                if (sex==1) strcpy(athle.gender,"男") ;
+                else if(sex==2) strcpy(athle.gender,"女") ;
             }
+            printf("年级：\n");
+            s_gets(athle.grade,10);
+            printf("学院：\n");
+            s_gets(athle.college,20);
+            printf("专业：\n");
+            s_gets(athle.major,20);
+            //根据代表队机制选择代表队
+            getTeamMechanism();
+            judgeMechanism=1;//不能再修改代表队属性
+            //代表队属性
+            if(strcmp(teamMechanism,"学院")==0)
+            {strcpy(athle.preteam,athle.college);}
+            else if(strcmp(teamMechanism,"专业")==0)
+                 {strcpy(athle.preteam,athle.major);}
+                 else if(strcmp(teamMechanism,"年级")==0)
+                     {strcpy(athle.preteam,athle.grade);}
 
-
-
-            fwrite(&new, sizeof(struct news),1,fp);
+            fwrite(&athle, sizeof(struct athletes),1,fp);
             fclose(fp);
-            printf("发布成功。");
+            printf("增加运动员%s成功。",athle.name);
         }else{
             adminControl();
         }
     }
     else{
-        printf("Cannot find news file!");
+        printf("Cannot find athlete file!");
+    }
+}
+
+void changeAthlete(){
+    int changeNumber;
+    int count=0;
+
+    struct athletes athle[newsNumber];
+    char choose;
+    printf("输入要修改的运动员的学号:·····返回管理员界面请按0");
+    scanf("%d",&changeNumber);
+    if(changeNumber!=0){
+        getchar();
+        printf("确定修改?(y/n)：·····返回管理员界面请按0");
+        scanf("%c",&choose);
+        getchar();
+        if(choose=='y'){
+            FILE *fp=NULL;
+            if((fp=fopen("news.txt","rb"))!=NULL){
+                while(!feof(fp)){
+                    fread(&new[count],sizeof(struct news),1,fp);
+                    count++;
+                }
+                fclose(fp);
+                count--;
+                int use=count+1-changeNumber;   //count+1-changeNumber就是实际上选择要修改的条目
+                printf("要修改的条目内容为：\n         时间                     通知内容 \n");
+                printf("       %s               %s\n",new[use-1].time,new[use-1].content);
+                printf("请输入修改后的内容：");
+                s_gets(new[use-1].content,100);
+                printf("%s",new[use-1].content);
+                printf("\n修改成功!");
+            }else{
+                printf("Cannot find the file!");
+            }
+            if((fp=fopen("news.txt","wb+"))!=NULL){
+                for(int i=0;i<count;i++)
+                    fwrite(&new[i], sizeof(struct news),1,fp);
+                fclose(fp);
+                adminControl();
+            }else{
+                printf("Cannot find the file!");
+            }
+        }else if(choose=='n'){
+            changeNews();
+        }else{
+            printf("输入无效！");
+            changeNews();
+        }
+    }else{
+        adminControl();
     }
 }
 
