@@ -3,4 +3,6 @@ project(SportSystem C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(SportSystem main.c inputAccount.c inputNews.c)
+
+
+add_executable(SportSystem   inputNews.c main.c SignInProgress.h)

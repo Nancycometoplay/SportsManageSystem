@@ -2,12 +2,15 @@
 #include <stdlib.h>
 //#include <mem.h>
 #include <memory.h>
+#include "SignInProgress.h"
 
+
+//初始化信息
 #define newsNumber 10
-#define accsNumber 10
+
 #define compsNumber 20
 #define teamsNumber 30
-#define filePath  "Users/nancy/Desktop/SportSystem/"
+
 
 char username[10];
 char teamMechanism[20];
@@ -17,10 +20,10 @@ struct news {
     char content[100];
 };
 
-struct account{
-    char username[10];
-    char password[10];
-};
+//struct account{
+//    char username[10];
+//    char password[10];
+//};
 
 struct athletes{
     char name[20];
@@ -28,11 +31,11 @@ struct athletes{
     char gender[10];
     char grade[10];     //年级
     char college[20];   //学院
-    char department[20]; //系
+   // char department[20]; //系
     char major[20];     //专业
     char preteam[10];  //代表单位
-    char number[10];   //运动员号
-    char score[10];    //个人成绩
+   //  char number[10];   //运动员号
+   //  char score[10];    //个人成绩
 };
 
 struct competition{
@@ -63,7 +66,7 @@ struct compDetail{
 
 void showNews();
 void chooseUser();
-int adminSignIn();
+//int adminSignIn();
 void adminControl();
 void addNews();
 void changeNews();
@@ -92,66 +95,41 @@ int main() {
 //这里第二个功能由志恒做
 void chooseUser(){
 
-    //int choose,checkAdmin;
-//    char choose='0' ;
-//    int checkAdmin;
+    int choose,checkAdmin;
+
+
     printf("------------登录------------\n");
     printf("1.管理员登录\n2.普通用户查询成绩\n");
-    adminControl();
-    // choose=getchar();
-//    scanf("%s",&choose);
-//    printf("%s",&choose);
-//    switch(choose){
-//        case '1':
-            //checkAdmin=adminSignIn();
-            //system("cls");
-            //printf("%d\n",checkAdmin);
+
+
+    scanf("%d",&choose);
+    //printf("%d",choose);
+    switch(choose){
+        case 1:
+            checkAdmin=adminSignIn();
+
+            printf("%d\n哈哈哈哈哈",checkAdmin);
             //test
-//            printf("？？？？？？success");
-//            if(checkAdmin==1) {
-//                adminControl();
-//            }
+            printf("成功执行adminSignIn操作success");
+            if(checkAdmin==1) {
+                adminControl();
+            }
 
-//            else {
-//                printf("密码输入错误!返回主界面中...\n\n");
-//                showNews();
-//                chooseUser();
-//            }
-//            printf("？？？？？？success");
-//            adminControl();
-//            break;
-//        default: printf("dame")   ;
-//    }
+            else {
+                printf("密码输入错误!返回主界面中...\n\n");
+                showNews();
+                chooseUser();
+            }
+            printf("？？？？？？success");
+            adminControl();
+            break;
+        default: printf("非管理员")   ;
+    }
 }
 
-//密码登录
-int adminSignIn(){
-//    晚些修改
-//    int count=0;
-//    char password[10];
-//    printf("username?\n");
-//    scanf("%s",username);
-//    printf("password?\n");
-//    scanf("%s",password);
-//    FILE *fp=NULL;
-//    struct account acc[accsNumber];
-//   // if((fp=fopen( strcat(filePath,"account.dat"),"rb"))!=NULL){
-//    if((fp=fopen("C:\\Users\\nancy\\Desktop\\account.dat","rb"))!=NULL){
-//        while(!feof(fp)){
-//            fread(&acc[count], sizeof(struct account),1,fp);
-//            if((strcmp(acc[count].username,username)==0)&&(strcmp(acc[count].password,password)==0)){
-//                return 1;
-//            }
-//            count++;
-//        }
-//        fclose(fp);
-//    }else{
-//        printf("Cannot find the file!");
-//    }
-//    return 0;
-    //change:
-    return 1;
-}
+//adminSignIn 在 SignInProgress里面
+
+
 
 void adminControl(){
     int choose;
@@ -226,6 +204,7 @@ void adminControl(){
     }
 }
 
+/*------------对news的增删改查和显示-begin--------------*/
 void addNews(){
     FILE *fp=NULL;
     struct news new;
@@ -442,6 +421,9 @@ void showNews(){
     }
 }
 
+
+/*------------对news的增删改查和显示-end--------------*/
+/*------------对competition的增删改和显示(没有查询)-begin--------------*/
 void showComps(){
     int i=1;
     int count=0;
@@ -601,7 +583,6 @@ void changeComp(){
     }
 }
 
-
 void deleteComp(){
     char deleteNumber[10];
     int count=0;
@@ -742,6 +723,9 @@ void showTeams(){
     adminControl();
 }
 
+/*------------对competition的增删改和显示(没有查询)-end--------------*/
+
+/*------------对代表队Team的增删改和显示(没有查询)-begin--------------*/
 void addTeams(){
     FILE *fp=NULL;
     struct teams team;
@@ -1306,7 +1290,7 @@ void setTeamMechanism(){
 
     adminControl();
 }
-
+/*------------对代表队Team的增删改和显示(没有查询)-end----------------*/
 //获取代表队是什么单位
 void getTeamMechanism(){
     FILE *fp=NULL;
@@ -1321,14 +1305,14 @@ void getTeamMechanism(){
     }
 }
 
-//这个是要干什么的，为什么用在addNews里面
+//读字符的
 char *s_gets(char *st,int n){
     char * ret_val;
     char *find;
 
-    ret_val=fgets(st,n,stdin);
+    ret_val=fgets(st,n,stdin);  //fget是什么意思
     if(ret_val){
-        find=strchr(st,'\n');
+        find=strchr(st,'\n');   //strchr是什么意思，加在st后面？
         if(find)
             *find='\0';
         else
