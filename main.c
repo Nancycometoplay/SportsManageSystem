@@ -1,15 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include "Liner_List_Operation.h"
+#include "file_operation.h"
+
 
 #define newsNumber 10
 #define accsNumber 10
+#define athleteNumber 100
 #define compsNumber 20
 #define teamsNumber 30
 
 char username[10];
 char teamMechanism[20];
-int judgeMechanism=0;
+int judgeMechanism=0;   //当等于1 时不能再修改代表队
 
 struct news{
     char time[100];
@@ -22,18 +26,18 @@ struct account{
 };
 
 //运动员7个参数
-struct athletes{
-    char name[20];
-    char id[20];
-    char gender[10];
-    char grade[10];
-    char college[20]; //学院
-   // char department[20];
-    char major[20];   //专业
-    char preteam[10]; //代表队
-   // char number[10];
-   // char score[10];
-};
+//struct athletes{
+//    char name[20];
+//    char id[20];
+//    char gender[10];
+//    char grade[10];
+//    char college[20]; //学院
+//   // char department[20];
+//    char major[20];   //专业
+//    char preteam[10]; //代表队
+//   // char number[10];
+//   // char score[10];
+//};
 
 struct competition{
     char category[10];  //田赛和径赛
@@ -80,6 +84,8 @@ void changeTeams();
 void deleteTeams();
 void setTeamMechanism();
 char *s_gets(char *st,int n);
+void addAthlete();
+void deleteAthlete();
 
 int main() {
     getTeamMechanism();
@@ -140,10 +146,16 @@ void adminControl(){
     int choose;
     printf("Welcome %s\n1.发布通知    2.修改通知\n3.删除通知    4.关键字查询通知\n5.查看发布的通知    6.发布新的比赛项目\n"
                    "7.查看已有的比赛项目  8.删除已有的比赛项目\n9.修改已有的比赛项目    10.设置代表队机制（学院/年级/专业）\n"
-                   "11.增加代表队（默认学院制） 12.查看已有的代表队\n13.修改已有的代表队信息   14.删除已有的代表队",username);
+                   "11.增加代表队（默认学院制） 12.查看已有的代表队\n13.修改已有的代表队信息   14.删除已有的代表队\n"
+                   "15.增加运动员 16.删除运动员 17.查找运动员 18.修改运动员信息\n"
+                   "19.运动员项目报名 20.运动员项目取消报名 21.项目成绩录入 22.成绩统计汇总\n"
+                   "0.退出\n",username);
     scanf("%d",&choose);
     getchar();
     switch(choose){
+        case 0:
+            printf("再见！");
+            exit(0);
         case 1:
             addNews();
             break;
@@ -187,6 +199,11 @@ void adminControl(){
         case 14:
             deleteTeams();
             break;
+        case 15:
+            addAthlete();
+            break;
+        case 16:
+            deleteAthlete();
         default:
             printf("输入有误！按任意键返回");
             getchar();
@@ -266,7 +283,7 @@ void changeNews(){
 }
 
 
-void deleteNews(){
+void deleteNews(){   //实现方法：读取文件中的内容传到结构数组，通过数组查找，通过数组删除，再把整个数组重新写回文件（还有改进方式）
     int deleteNumber;
     int count=0;
     showNews();
@@ -717,6 +734,9 @@ void showTeams(){
     adminControl();
 }
 
+
+
+//感觉不对啊，在确定代表队机制后，名称应该是要统一的
 void addTeams(){
     FILE *fp=NULL;
     struct teams team;
@@ -1248,22 +1268,23 @@ void deleteTeams(){
 /*------------对代表队Team的增删改和显示(没有查询)-end----------------*/
 
 void setTeamMechanism(){
-    int choose;
+    char choose;
     char newTeamMechanism[20];
     FILE *fp=NULL;
-    if((fp=fopen("teamMechanism.txt","wb+"))!=NULL){
-        while(!feof(fp)){
+    if((fp=fopen("teamMechanism.txt","rb+"))!=NULL){   //rb更新模式
+
             fread(&teamMechanism,sizeof(teamMechanism),1,fp);
-        }
+
         printf("当前机制为：%s\n",teamMechanism);
     }else{
         printf("Cannot find the file!");
     }
     printf("需要修改请按1，无需修改请按其他任意键");
-    scanf("%d",&choose);
+    scanf("%c",&choose);
     getchar();
     switch (choose){
-        case 1:
+        case '1':
+
             printf("请输入新的代表队机制（学院/年级/专业：");
             s_gets(newTeamMechanism,20);
             if(!judgeMechanism)     //当judge 是1 时，证明已经录入了运动员，如果judge是0就可以改
@@ -1279,9 +1300,9 @@ void setTeamMechanism(){
                     setTeamMechanism();
                 }
             }
-
             break;
-        default:fclose(fp);adminControl();
+        default:
+            fclose(fp);
     }
 
     adminControl();
@@ -1302,26 +1323,115 @@ void getTeamMechanism(){
 /*------------对athlete的增删改查-begin--------------*/
 void addAthlete(){
     FILE *fp=NULL;
+    int count=0;
     struct athletes athle;
-    int sex;
-    if((fp=fopen("athlete.txt","ab+"))!=NULL){
+    struct teams team[teamsNumber];
+    //char *temp="";
+    char sex;
+    int judge=0;
+    if((fp=fopen("athlete.txt","ab+"))!=NULL){   //a+从末尾添加
         printf("请输入运动员学号 \n·····返回管理员界面请按0");
         s_gets(athle.id,20);
         if(strcmp(athle.id,"0")!=0){
             printf("姓名：\n");
             s_gets(athle.name,20);
             printf("性别：1:男 2:女\n");
-            //鲁棒性
-            while(scanf("%d",&sex)&&(sex==1||sex==2)){
-                if (sex==1) strcpy(athle.gender,"男") ;
-                else if(sex==2) strcpy(athle.gender,"女") ;
+
+            scanf("%c",&sex);
+            getchar();
+            if(sex=='1') strcpy(athle.gender,"男");
+            else
+            {
+                 if(sex=='2') strcpy(athle.gender,"女");
+                 else {
+                  printf("输入错误");
+                  adminControl(); }
             }
+
+            //根据teamForGrade文件录入年级
             printf("年级：\n");
-            s_gets(athle.grade,10);
+            s_gets(athle.grade,20);
+//            if ((fp = fopen("teamForGrade.txt", "rb")) != NULL)
+//            {
+//                while (!feof(fp)) {
+//                    fread(&team[count], sizeof(struct teams), 1, fp);
+//                    count++;
+//                }
+//                for(int i=0;i<count;i++)
+//                {
+//                    if(strcmp(team[i].name,athle.grade)==0)
+//                    {judge=1;}
+//                }
+//                fclose(fp);
+//                if(judge) {judge=0;count=0;}
+//                else
+//                {
+//                    printf("没有该年级，请先去修改年级管理文件");
+//                    count=0;//初始化数组
+//                    adminControl();
+//                }
+//            }
+//            else {
+//                printf("Cannot find teamForGrade file!");
+//            }
+
+            //根据teamForCollege文件录入
             printf("学院：\n");
             s_gets(athle.college,20);
+//            if ((fp = fopen("teamForCollege.txt", "rb")) != NULL)
+//            {
+//
+//                while (!feof(fp)) {
+//                    fread(&team[count], sizeof(struct teams), 1, fp);
+//                    count++;
+//                }
+//                for(int i=0;i<count;i++)
+//                {
+//                    if(strcmp(team[i].name,athle.college)==0)
+//                    {judge=1;}
+//                }
+//                fclose(fp);
+//                if(judge) {judge=0;count=0;}
+//                else
+//                {
+//                    printf("没有该学院，请先去修改学院管理文件");
+//                    count=0;
+//                    adminControl();
+//                }
+//            }
+//            else {
+//                printf("Cannot find teamForCollege file!");
+//            }
+
+
+            //根据teamForMajor文件录入
             printf("专业：\n");
             s_gets(athle.major,20);
+//            if ((fp = fopen("teamForMajor.txt", "rb")) != NULL)
+//            {
+//
+//                while (!feof(fp)) {
+//                    fread(&team[count], sizeof(struct teams), 1, fp);
+//                    count++;
+//                }
+//                for(int i=0;i<count;i++)
+//                {
+//                    if(strcmp(team[i].name,athle.major)==0)
+//                    {judge=1;}
+//                }
+//                fclose(fp);
+//                if(judge) {judge=0;count=0;}
+//                else
+//                {
+//                    printf("没有该专业，请先去修改专业管理文件");
+//                    count=0;
+//                    adminControl();
+//                }
+//            }
+//            else {
+//                printf("Cannot find teamForMajor file!");
+//            }
+
             //根据代表队机制选择代表队
             getTeamMechanism();
             judgeMechanism=1;//不能再修改代表队属性
@@ -1336,6 +1446,7 @@ void addAthlete(){
             fwrite(&athle, sizeof(struct athletes),1,fp);
             fclose(fp);
             printf("增加运动员%s成功。",athle.name);
+            adminControl();
         }else{
             adminControl();
         }
@@ -1345,56 +1456,281 @@ void addAthlete(){
     }
 }
 
-void changeAthlete(){
-    int changeNumber;
-    int count=0;
-
-    struct athletes athle[newsNumber];
+void changeAthlete() {
+    char *changeId = "";   //可能要修改
+    int count = 0, isFind = 0, sex = 0, judge = 0;
+    int teamcount = 0;
+    int athleN = 0;
+    struct athletes athle[athleteNumber];  //把文件中运动员的信息放在这里
+    struct teams team[teamsNumber];
     char choose;
     printf("输入要修改的运动员的学号:·····返回管理员界面请按0");
-    scanf("%d",&changeNumber);
-    if(changeNumber!=0){
-        getchar();
+    s_gets(changeId, 20);
+    if (strcmp(changeId, "0") != 0) {
+        //getchar();
         printf("确定修改?(y/n)：·····返回管理员界面请按0");
-        scanf("%c",&choose);
+        scanf("%c", &choose);
         getchar();
-        if(choose=='y'){
-            FILE *fp=NULL;
-            if((fp=fopen("news.txt","rb"))!=NULL){
-                while(!feof(fp)){
-                    fread(&new[count],sizeof(struct news),1,fp);
+        if (choose == 'y') {
+            FILE *fp = NULL;
+            FILE *athleF = NULL;
+            if ((athleF = fopen("athlete.txt", "rb")) != NULL) {
+                //将运动员数据从文件中读到结构数组中
+                while (!feof(athleF)) {
+                    fread(&athle[count], sizeof(struct athletes), 1, athleF);
                     count++;
                 }
-                fclose(fp);
-                count--;
-                int use=count+1-changeNumber;   //count+1-changeNumber就是实际上选择要修改的条目
-                printf("要修改的条目内容为：\n         时间                     通知内容 \n");
-                printf("       %s               %s\n",new[use-1].time,new[use-1].content);
-                printf("请输入修改后的内容：");
-                s_gets(new[use-1].content,100);
-                printf("%s",new[use-1].content);
-                printf("\n修改成功!");
-            }else{
-                printf("Cannot find the file!");
+                count -= 2; //why?  feof多读了一次，最后多读了一次
+                athleN = count;//记住现在文件中运动员的数量
+                fclose(athleF);
+
+                //在数组中找出要修改的运动员号
+                while (count >= 0) {
+                    if (strcmp(athle[count].id, changeId) == 0) {
+                        printf("以下是要修改的运动员的信息：");
+                        printf("%s       %s       %s       %s       %s       %s       %s\n",
+                               athle[count].name, athle[count].id, athle[count].gender, athle[count].grade,
+                               athle[count].college,
+                               athle[count].major, athle[count].preteam);
+                        isFind = 1;
+
+                    }
+                    count--;
+                }
+                if (isFind == 0) {
+                    printf("无找到所查信息\n");
+                } else if (isFind == 1) {
+                    printf("请选择要修改的信息：1.姓名 2.性别 3.年级 4.学院 5.专业\n·····返回管理员界面请按0");
+                    while (scanf("%c", &choose) != 0 &&
+                           (choose == '1' || choose == '2' || choose == '3' || choose == '4' || choose == '5' ||
+                            choose == '0')) {
+                        getchar();
+                        judge = 0;//初始化没有找到team对应文件
+                        teamcount = 0;
+                        switch (choose) {
+                            case '1':
+                                printf("修改姓名为:");
+                                s_gets(athle[count].name, 20);
+                                judge = 1;
+                                break;
+                            case '2':
+                                printf("修改性别为:1.男 2.女");
+                                while (scanf("%d", &sex) && (sex == 1 || sex == 2)) {
+                                    if (sex == 1) strcpy(athle[count].gender, "男");
+                                    else if (sex == 2) strcpy(athle[count].gender, "女");
+                                }
+                                judge = 1;
+                                break;
+                            case '3':
+                                printf("修改年级为:");
+                                s_gets(athle[count].grade, 10);
+                                if ((fp = fopen("teamForGrade.txt", "rb")) != NULL) {
+                                    while (!feof(fp)) {
+                                        fread(&team[teamcount], sizeof(struct teams), 1, fp);
+                                        teamcount++;
+                                    }
+                                    for (int i = 0; i < teamcount; i++) {
+                                        if (strcmp(team[i].name, athle[count].grade) == 0) { judge = 1; }
+                                    }
+                                    fclose(fp);
+                                    if (judge) {}
+                                    else {
+                                        printf("没有该年级，请先去修改年级管理文件");
+                                        teamcount = 0;//初始化数组
+                                        //adminControl();
+                                    }
+                                } else {
+                                    printf("Cannot find teamForGrade file!");
+                                }
+                                break;
+                            case '4':
+                                printf("修改学院为:");
+                                s_gets(athle[count].college, 20);
+                                if ((fp = fopen("teamForCollege.txt", "rb")) != NULL) {
+                                    while (!feof(fp)) {
+                                        fread(&team[teamcount], sizeof(struct teams), 1, fp);
+                                        teamcount++;
+                                    }
+                                    for (int i = 0; i < teamcount; i++) {
+                                        if (strcmp(team[i].name, athle[count].college) == 0) { judge = 1; }
+                                    }
+                                    fclose(fp);
+                                    if (judge) {}
+                                    else {
+                                        printf("没有该年级，请先去修改年级管理文件");
+                                        teamcount = 0;//初始化数组
+                                        //adminControl();
+                                    }
+                                } else {
+                                    printf("Cannot find teamForCollege file!");
+                                }
+                                break;
+                            case '5':
+                                printf("修改专业为:");
+                                s_gets(athle[count].major, 20);
+                                if ((fp = fopen("teamForMajor.txt", "rb")) != NULL) {
+                                    while (!feof(fp)) {
+                                        fread(&team[teamcount], sizeof(struct teams), 1, fp);
+                                        teamcount++;
+                                    }
+                                    for (int i = 0; i < teamcount; i++) {
+                                        if (strcmp(team[i].name, athle[count].major) == 0) { judge = 1; }
+                                    }
+                                    fclose(fp);
+                                    if (judge) {}
+                                    else {
+                                        printf("没有该专业，请先去修改专业管理文件");
+                                        teamcount = 0;//初始化数组
+                                        //adminControl();
+                                    }
+                                } else {
+                                    printf("Cannot find teamForMajor file!");
+                                }
+                                break;
+                            case '0':
+                                adminControl();
+                                break;
+                        }
+                        //随机访问（需要检验）
+                        if (judge) {
+//                            long pos;
+//                            pos =(long) count*sizeof(struct athletes);  //计算偏移量，不确定能不能直接这样写进去，不清楚会不会把原来的删除掉，还是再加一个新的
+//                            fseek(athleF,pos,SEEK_SET);                 //定位到此处
+
+                            if ((fp = fopen("athletes.txt", "wb+")) != NULL) {  //重写
+                                for (int i = 0; i <= athleN; i++)
+                                    fwrite(&athle[i], sizeof(struct athletes), 1, fp);
+                                fclose(fp);
+                                printf("已经修改");
+                                adminControl();
+                            } else {
+                                printf("Cannot find athletes file!");
+
+                            }
+                            printf("请选择要修改的信息：1.姓名 2.性别 3.年级 4.学院 5.专业\n·····返回管理员界面请按0");
+                        }//while 结束
+
+
+                    }
+
+                } else {
+                    printf("Cannot find athletes file!");
+                }
+
+            } else if (choose == 'n') {
+                changeNews();
+            } else {
+                printf("输入无效！");
+                changeNews();
             }
-            if((fp=fopen("news.txt","wb+"))!=NULL){
-                for(int i=0;i<count;i++)
-                    fwrite(&new[i], sizeof(struct news),1,fp);
-                fclose(fp);
-                adminControl();
-            }else{
-                printf("Cannot find the file!");
-            }
-        }else if(choose=='n'){
-            changeNews();
-        }else{
-            printf("输入无效！");
-            changeNews();
-        }
-    }else{
-        adminControl();
+        } else
+            adminControl();
+
     }
 }
+
+//void deleteAthlete() {   //实现方法：读取文件中的内容传到结构数组，通过数组查找，通过数组删除，再把整个数组重新写回文件（还有改进方式）
+//                         //和change非常类似
+//
+//    char *deleteId = "";   //可能要修改
+//    int count = 0, isFind = 0, sex = 0, judge = 0;
+//    int teamcount = 0;
+//    int athleN = 0;
+//    struct athletes athle[athleteNumber];  //把文件中运动员的信息放在这里
+//    struct teams team[teamsNumber];
+//    char choose;
+//    printf("输入要删除的运动员的学号:·····返回管理员界面请按0");
+//    s_gets(deleteId, 20);
+//    if (strcmp(deleteId, "0") != 0) {
+//        //getchar();
+//        printf("确定删除?(y/n)：·····返回管理员界面请按0");
+//        scanf("%c", &choose);
+//        getchar();
+//        if (choose == 'y') {
+//            FILE *fp = NULL;
+//            FILE *athleF = NULL;
+//            if ((athleF = fopen("athlete.txt", "rb")) != NULL) {  //更新模式
+//                //将运动员数据从文件中读到结构数组中
+//                while (!feof(athleF)) {
+//                    fread(&athle[count], sizeof(struct athletes), 1, athleF);
+//                    count++;
+//                }
+//                count -= 2; //why?  feof多读了一次，最后多读了一次
+//                athleN = count;//记住现在文件中运动员的数量
+//                fclose(athleF);
+//
+//                //在数组中找出要修改的运动员号
+//                while (count >= 0) {
+//                    if (strcmp(athle[count].id, deleteId) == 0) {
+//                        printf("以下是要删除的运动员的信息：");
+//                        printf("%s       %s       %s       %s       %s       %s       %s\n",
+//                               athle[count].name, athle[count].id, athle[count].gender, athle[count].grade,
+//                               athle[count].college,
+//                               athle[count].major, athle[count].preteam);
+//                        isFind = 1;
+//                        break;
+//                    }
+//                    count--;
+//                }
+//                if (isFind == 0) {
+//                    printf("无找到所查信息\n");
+//                }
+//
+//                //进行数组的删除
+//                if(isFind==1)
+//                {
+//
+//                }
+//
+//            }
+//       //进行一系列返回的操作
+//
+//}
+
+
+// 新方法——使用头文件
+void deleteAthlete() {
+    struct athletes athle[athleteNumber];  //把文件中运动员的信息放在这里
+    struct teams team[teamsNumber];
+    struct athletes deleteAth;
+    char choose;
+    printf("输入要删除的运动员的学号:\n·····返回管理员界面请按0");
+    s_gets(deleteAth.id, 20);
+    if (strcmp(deleteAth.id, "0") != 0) {
+
+        FILE *fp = NULL;
+        int count = 0;
+
+        //完成从文件到结构数组的转移
+        count = ReadFromFile("athlete.txt", athle, fp);
+        printf("test");
+        //找出要改的运动员信息
+        deleteAth = Find_List(athle, count, 1, deleteAth.id);
+        //如果找到了
+        if (getFindTemp())
+        {
+            printf("删除： %s  %s  %s  %s  %s  %s  %s  ", deleteAth.name, deleteAth.id, deleteAth.gender,
+                   deleteAth.grade,
+                   deleteAth.college, deleteAth.major, deleteAth.preteam);
+            printf("确定删除？y/n");
+            scanf("%c", &choose);
+            if (choose == 'y') {
+                Delete_List(athle, count, deleteAth);
+                WriteInFile("athlete.txt", athle, count - 1, fp);  //已经删除了一个
+                adminControl();
+            }
+            else {printf("取消删除，回到主界面...");
+            adminControl();}
+        }
+            //如果没找到
+        else {
+            printf("没有找到文件");
+            adminControl();
+        }
+
+    }
+}
+
 
 /*------------对athlete的增删改查-end----------------*/
 

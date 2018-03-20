@@ -2,33 +2,34 @@
 //// Created by Chan on 2018/3/11.
 ////
 //
-//#include <stdio.h>
-//#include <mem.h>
-//
+#include <stdio.h>
+#include <memory.h>
+#include "main.c"
+
 //char *s_gets(char *st,int n);
-//
+
 //struct account{
 //    char username[10];
 //    char password[10];
 //};
-//
+
 //int main(void){
 //    struct account acc[2];
 //    for(int i=0;i<2;i++){
 //        s_gets(acc[i].username,10);
-//        //printf("password\n");
+//        printf("password\n");
 //        s_gets(acc[i].password,10);
-//        //printf("username\n");
+//        printf("username\n");
 //    }
 //    FILE *fp=NULL;
-//    fp=fopen("C:\\Users\\Chan\\Desktop\\account.dat","wb");
+//    fp=fopen("account.txt","wb");
 //    for(int i=0;i<2;i++)
 //       fwrite(&acc[i], sizeof(struct account),1,fp);
 //        //fprintf(fp,"%s %s ",acc[i].username,acc[i].password);
 //    fclose(fp);
 //    return 0;
 //}
-//
+
 //char *s_gets(char *st,int n){
 //    char * ret_val;
 //    char *find;

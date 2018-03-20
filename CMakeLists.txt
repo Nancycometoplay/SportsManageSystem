@@ -12,7 +12,8 @@ set(SOURCE_FILES
         CMakeLists.txt
 
         Inked微信图片_20180311220616_LI.jpg
-        inputAccount.c
-        main.c)
+
+        main.c
+        Liner_List_Operation.h file_operation.h)
 
 add_executable(SportSystem_2 ${SOURCE_FILES} main.c)
